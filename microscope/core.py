@@ -125,7 +125,7 @@ class SerialProtocolEngine(Module):
                 current_byte.eq(0)
             )
         ]
-        self.comb += current_byte.eq(current_byte)
+        self.comb += last_byte.eq(current_byte == imux.last_byte)
 
         fsm = ResetInserter()(FSM())
         self.submodules += fsm

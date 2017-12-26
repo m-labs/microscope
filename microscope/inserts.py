@@ -84,6 +84,13 @@ class ProbeBuffer(Insert):
         self.data = Signal(len(self.target))
         self.specials.memory = Memory(len(self.target), self.depth)
 
+        rdport = self.memory.get_port(clock_domain="microscope")
+        self.specials += rdport
+        self.comb += [
+            rdport.adr.eq(self.address),
+            self.data.eq(rdport.dat_r)
+        ]
+
         ps_arm = PulseSynchronizer("microscope", self.clock_domain)
         ps_done = PulseSynchronizer(self.clock_domain, "microscope")
         self.submodules += ps_arm, ps_done
@@ -96,7 +103,6 @@ class ProbeBuffer(Insert):
         port = self.memory.get_port(write_capable=True,
                                     clock_domain=self.clock_domain)
         self.specials += port
-
 
         running = Signal()
         wait_trigger = Signal()

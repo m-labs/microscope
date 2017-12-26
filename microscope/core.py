@@ -118,7 +118,7 @@ class SerialProtocolEngine(Module):
         self.sync += [
             If(next_byte,
                 Case(current_byte, {
-                    i: data.eq(imux.data[(i*8):]) for i in range(1, nbytes)
+                    i: data.eq(imux.data[((i+1)*8):]) for i in range(nbytes-1)
                 }),
                 current_byte.eq(current_byte + 1)
             ),

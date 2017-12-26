@@ -14,8 +14,8 @@ class MicroscopeDemo(Module):
         self.comb += toggle.eq(counter[29])
         self.sync += counter.eq(counter + 1)
 
-        add_probe_single("demo", "toggle", toggle)
-        add_probe_buffer("demo", "counter", counter)
+        self.submodules += add_probe_single("demo", "toggle", toggle)
+        self.submodules += add_probe_buffer("demo", "counter", counter)
 
         self.submodules += Microscope(serial_pads, sys_clk_freq)
 

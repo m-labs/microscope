@@ -3,6 +3,7 @@ from migen.genlib.fsm import *
 
 from microscope.globals import registry as global_registry
 from microscope.inserts import ProbeBuffer
+from microscope.config import *
 from microscope.uart import UART
 
 
@@ -229,13 +230,12 @@ class Microscope(Module):
 
     def do_finalize(self):
         inserts = [insert for insert in self.registry.inserts if insert.enabled]
-
+        if not inserts:
+            return
         for insert in inserts:
             insert.finalize()
 
-        config_data = [12, 34, 15, 97]
-
-        config_rom = ConfigROM(config_data)
+        config_rom = ConfigROM(list(get_config_from_inserts(inserts)))
         imux = InsertMux(inserts)
         spe = SerialProtocolEngine(config_rom, imux, round(self.sys_clk_freq*5e-3))
         uart = UART(self.serial_pads, round((115200/self.sys_clk_freq)*2**32))

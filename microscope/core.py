@@ -2,6 +2,8 @@ from migen import *
 from migen.genlib.fsm import *
 
 from microscope.globals import registry as global_registry
+from microscope.inserts import ProbeBuffer
+from microscope.uart import UART
 
 
 class ConfigROM(Module):
@@ -31,7 +33,7 @@ class ConfigROM(Module):
 
 class InsertMux(Module):
     def __init__(self, inserts):
-        max_depth = max(insert.depth for insert in inserts if isinstance(insert, ProbeBuffer),
+        max_depth = max((insert.depth for insert in inserts if isinstance(insert, ProbeBuffer)),
                         default=1)
         max_width = max(len(insert.data) for insert in inserts)
 
@@ -46,15 +48,15 @@ class InsertMux(Module):
 
         # # #
 
+        sel = self.sel
         self.comb += [
             self.pending.eq(Array(insert.pending for insert in inserts)[sel]),
             self.data.eq(Array(insert.data for insert in inserts)[sel])
         ]
         for n, insert in enumerate(inserts):
-            self.comb += [
-                insert.arm.eq(self.arm & (self.sel == n)),
-                insert.address = address
-            ]
+            self.comb += insert.arm.eq(self.arm & (sel == n))
+            if isinstance(insert, ProbeBuffer):
+                self.comb += insert.address.eq(self.address)
         self.comb += [
             self.last_address.eq(Array(insert.depth-1 if isinstance(insert, ProbeBuffer) else 0
                                        for insert in inserts)[sel]),
@@ -77,7 +79,7 @@ class SerialProtocolEngine(Module):
         timeout_counter = Signal(max=timeout_cycles + 1, reset=timeout_cycles)
         self.sync += [
             timeout.eq(0),
-            If(tx_stb | rx_stb,
+            If(self.tx_stb | self.rx_stb,
                 timeout_counter.eq(timeout_cycles)
             ).Else(
                 If(timeout_counter == 0,
@@ -96,10 +98,10 @@ class SerialProtocolEngine(Module):
         self.sync += current_address.eq(imux.address)
         self.comb += [
             imux.address.eq(current_address),
-            If(self.next,
+            If(next_address,
                 imux.address.eq(current_address + 1)
             ),
-            If(self.reset,
+            If(reset_address,
                 imux.address.eq(0)
             ),
             last_address.eq(current_address == imux.last_address)
@@ -114,10 +116,10 @@ class SerialProtocolEngine(Module):
         self.sync += [
             If(next_byte,
                 Case(current_byte, {
-                    i: imux.data[(i*8):] for i in range(1, nbytes)
+                    i: data.eq(imux.data[(i*8):]) for i in range(1, nbytes)
                 }),
                 current_byte.eq(current_byte + 1)
-            )
+            ),
             If(reset_byte,
                 data.eq(imux.data),
                 current_byte.eq(0)
@@ -138,7 +140,7 @@ class SerialProtocolEngine(Module):
                 )
             )
         )
-        fsm.act("MAGIC2"
+        fsm.act("MAGIC2",
             If(self.rx_stb,
                 If(self.rx_data == 0xe5,
                     NextState("MAGIC3")
@@ -147,7 +149,7 @@ class SerialProtocolEngine(Module):
                 )
             )
         )
-        fsm.act("MAGIC3"
+        fsm.act("MAGIC3",
             If(self.rx_stb, 
                 If(self.rx_data == 0x52,
                     NextState("MAGIC4")
@@ -156,10 +158,10 @@ class SerialProtocolEngine(Module):
                 )
             )
         )
-        fsm.act("MAGIC4"
+        fsm.act("MAGIC4",
             If(self.rx_stb,
                 If(self.rx_data == 0x9c,
-                    NextState("GET_COMMAND")
+                    NextState("COMMAND")
                 ).Else(
                     NextState("MAGIC1")
                 )
@@ -189,7 +191,7 @@ class SerialProtocolEngine(Module):
         )
         fsm.act("SET_SEL",
             If(self.rx_stb,
-                NextValue(imux.sel, rx_data),
+                NextValue(imux.sel, self.rx_data),
                 NextState("MAGIC1")
             )
         )
@@ -216,19 +218,27 @@ class SerialProtocolEngine(Module):
 
 class Microscope(Module):
     def __init__(self, serial_pads, sys_clk_freq, registry=None):
+        self.serial_pads = serial_pads
+        self.sys_clk_freq = sys_clk_freq
+        if registry is None:
+            registry = global_registry
+        self.registry = registry
+
         self.clock_domains.cd_microscope = ClockDomain(reset_less=True)
         self.comb += self.cd_microscope.clk.eq(ClockSignal())
 
-        if registry is None:
-            registry = global_registry
-        inserts = [insert for insert in registry.inserts if insert.enabled]
+    def do_finalize(self):
+        inserts = [insert for insert in self.registry.inserts if insert.enabled]
+
+        for insert in inserts:
+            insert.finalize()
 
         config_data = [12, 34, 15, 97]
 
         config_rom = ConfigROM(config_data)
         imux = InsertMux(inserts)
-        spe = SerialProtocolEngine(config_rom, imux, sys_clk_freq*5e-3)
-        uart = UART(serial_pads, round((115200/sys_clk_freq)*2**32))
+        spe = SerialProtocolEngine(config_rom, imux, round(self.sys_clk_freq*5e-3))
+        uart = UART(self.serial_pads, round((115200/self.sys_clk_freq)*2**32))
         self.submodules += config_rom, imux, spe, uart
 
         self.comb += [

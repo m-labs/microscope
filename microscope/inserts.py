@@ -1,5 +1,5 @@
 from migen import *
-from migen.genlib.cdc import PulseSynchronizer
+from migen.genlib.cdc import PulseSynchronizer, MultiReg
 
 
 __all__ = ["InsertRegistry", "ProbeSingle", "ProbeBuffer"]
@@ -47,7 +47,7 @@ class ProbeSingle(Insert):
         self.data = Signal.like(self.target)
 
         buf = Signal.like(self.target)
-        buf.attrs.add("no_retiming")
+        buf.attr.add("no_retiming")
         self.specials += MultiReg(buf, self.data, "microscope")
 
         ps_arm = PulseSynchronizer("microscope", self.clock_domain)

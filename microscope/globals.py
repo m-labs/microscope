@@ -1,7 +1,7 @@
-from miscroscope.inserts import *
+from microscope.inserts import *
 
 
-registry = ProbeRegistry()
+registry = InsertRegistry()
 
 
 def add_probe_single(*args, **kwargs):

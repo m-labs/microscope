@@ -1,22 +1,23 @@
 from migen import *
+from migen.genlib.cdc import MultiReg
 
 
 class UART(Module):
-	def __init__(self, pads, tuning_word):
-		self.rx_data = Signal(8)
+    def __init__(self, pads, tuning_word):
+        self.rx_data = Signal(8)
         self.rx_stb = Signal()
 
         self.tx_data = Signal(8)
         self.tx_stb = Signal()
         self.tx_ack = Signal()
 
-		# # #
+        # # #
 
-		#
-		# RX
-		#
+        #
+        # RX
+        #
 
-		uart_clk_rxen = Signal()
+        uart_clk_rxen = Signal()
         phase_accumulator_rx = Signal(32)
 
         rx = Signal()
@@ -75,7 +76,7 @@ class UART(Module):
         self.sync += [
             self.tx_ack.eq(0),
             If(self.tx_stb & ~tx_busy & ~self.tx_ack,
-                tx_reg.eq(self.sink.data),
+                tx_reg.eq(self.tx_data),
                 tx_bitcount.eq(0),
                 tx_busy.eq(1),
                 pads.tx.eq(0)

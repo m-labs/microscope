@@ -21,6 +21,7 @@ class ConfigROM(Module):
         current_address = Signal(max=len(data))
         self.sync += current_address.eq(port.adr)
         self.comb += [
+            self.data.eq(port.dat_r),
             port.adr.eq(current_address),
             If(self.next,
                 port.adr.eq(current_address + 1)

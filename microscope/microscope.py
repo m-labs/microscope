@@ -2,9 +2,10 @@
 
 import sys
 import argparse
+import struct
+
 import serial
 import msgpack
-import struct
 import prettytable
 
 

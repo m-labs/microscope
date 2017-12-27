@@ -1,6 +1,6 @@
-from microscope.inserts import *
-
 import msgpack
+
+from microscope.inserts import *
 
 
 __all__ = ["get_config_from_inserts"]

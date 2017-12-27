@@ -1,0 +1,44 @@
+package:
+  name: microscope
+  version: {{ environ.get("GIT_DESCRIBE_TAG", "") }}
+
+source:
+  git_url: ../..
+
+{% set data = load_setup_py_data() %}
+
+build:
+  noarch: python
+  number: {{ environ.get("GIT_DESCRIBE_NUMBER", 0) }}
+  string: py35_{{ environ.get("GIT_DESCRIBE_NUMBER", 0) }}+git{{ environ.get("GIT_FULL_HASH", "")[:8] }}
+  entry_points:
+    # NOTE: conda-build cannot distinguish between console and gui scripts
+    {% for entry_point_type, entry_points in data.get("entry_points", dict()).items() -%}
+    {% for entry_point in entry_points -%}
+    - {{ entry_point }}
+    {% endfor %}
+    {% endfor %}
+  script: $PYTHON setup.py install --single-version-externally-managed --record=record.txt
+
+requirements:
+  build:
+    - python >=3.5.0
+    - migen
+    - pyserial
+    - msgpack-python
+    - prettytable
+  run:
+    - python >=3.5.0
+    - migen
+    - pyserial
+    - msgpack-python
+    - prettytable
+
+test:
+  imports:
+    - microscope
+
+about:
+  home: https://m-labs.hk
+  license: 2-clause BSD
+  summary: 'A simple FPGA logic analyzer for Migen designs'

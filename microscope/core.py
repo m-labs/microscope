@@ -208,13 +208,18 @@ class SerialProtocolEngine(Module):
             If(self.tx_ack,
                 next_byte.eq(1),
                 If(last_byte,
-                    reset_byte.eq(1),
                     next_address.eq(1),
                     If(last_address,
                         NextState("MAGIC1")
+                    ).Else(
+                        NextState("RESET_BYTE")
                     )
                 )
             )
+        )
+        fsm.act("RESET_BYTE",
+            reset_byte.eq(1),
+            NextState("SEND_DATA")
         )
 
 

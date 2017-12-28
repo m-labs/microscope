@@ -244,7 +244,7 @@ class Microscope(Module):
 
         config_rom = ConfigROM(list(get_config_from_inserts(inserts)))
         imux = InsertMux(inserts)
-        spe = SerialProtocolEngine(config_rom, imux, round(self.sys_clk_freq*5e-3))
+        spe = SerialProtocolEngine(config_rom, imux, round(self.sys_clk_freq*50e-3))
         uart = UART(self.serial_pads, round((115200/self.sys_clk_freq)*2**32))
         self.submodules += config_rom, imux, spe, uart
 

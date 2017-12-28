@@ -127,6 +127,9 @@ class SerialProtocolEngine(Module):
         ]
         self.comb += last_byte.eq(current_byte == imux.last_byte)
 
+        imux_sel_load = Signal()
+        self.sync += If(imux_sel_load, imux.sel.eq(self.rx_data))
+
         fsm = ResetInserter()(FSM())
         self.submodules += fsm
         self.comb += fsm.reset.eq(timeout)
@@ -191,7 +194,7 @@ class SerialProtocolEngine(Module):
         )
         fsm.act("SET_SEL",
             If(self.rx_stb,
-                NextValue(imux.sel, self.rx_data),
+                imux_sel_load.eq(1),
                 NextState("MAGIC1")
             )
         )

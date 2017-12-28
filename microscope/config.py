@@ -16,7 +16,7 @@ def get_config_from_inserts(inserts):
     for insert in inserts:
         element = [config_groups.index(insert.group),
                    insert.name]
-        if isinstance(insert, ProbeSingle):
+        if isinstance(insert, (ProbeAsync, ProbeSingle)):
             element += [len(insert.data), 1]
         elif isinstance(insert, ProbeBuffer):
             element += [len(insert.data), insert.depth]

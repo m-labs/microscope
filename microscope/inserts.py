@@ -2,7 +2,7 @@ from migen import *
 from migen.genlib.cdc import PulseSynchronizer, MultiReg
 
 
-__all__ = ["InsertRegistry", "ProbeSingle", "ProbeBuffer"]
+__all__ = ["InsertRegistry", "ProbeAsync", "ProbeSingle", "ProbeBuffer"]
 
 
 class InsertRegistry:
@@ -33,6 +33,16 @@ class Insert(Module):
 
     def create_insert_logic(self):
         raise NotImplementedError
+
+
+class ProbeAsync(Insert):
+    def __init__(self, registry, group, name, target):
+        Insert.__init__(self, registry, group, name)
+        self.target = target
+
+    def create_insert_logic(self):
+        self.data = Signal.like(self.target)
+        self.specials += MultiReg(self.target, self.data, "microscope")
 
 
 class ProbeSingle(Insert):

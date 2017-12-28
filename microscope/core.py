@@ -2,7 +2,6 @@ from migen import *
 from migen.genlib.fsm import *
 
 from microscope.globals import registry as global_registry
-from microscope.inserts import ProbeBuffer
 from microscope.config import *
 from microscope.uart import UART
 
@@ -35,8 +34,7 @@ class ConfigROM(Module):
 
 class InsertMux(Module):
     def __init__(self, inserts):
-        max_depth = max((insert.depth for insert in inserts if isinstance(insert, ProbeBuffer)),
-                        default=1)
+        max_depth = max(getattr(insert, "depth", 1) for insert in inserts)
         max_width = max(len(insert.data) for insert in inserts)
 
         self.sel = Signal(max=len(inserts))
@@ -52,16 +50,16 @@ class InsertMux(Module):
 
         sel = self.sel
         self.comb += [
-            self.pending.eq(Array(insert.pending for insert in inserts)[sel]),
+            self.pending.eq(Array(getattr(insert, "pending", 0) for insert in inserts)[sel]),
             self.data.eq(Array(insert.data for insert in inserts)[sel])
         ]
         for n, insert in enumerate(inserts):
-            self.comb += insert.arm.eq(self.arm & (sel == n))
-            if isinstance(insert, ProbeBuffer):
+            if hasattr(insert, "arm"):
+                self.comb += insert.arm.eq(self.arm & (sel == n))
+            if hasattr(insert, "address"):
                 self.comb += insert.address.eq(self.address)
         self.comb += [
-            self.last_address.eq(Array(insert.depth-1 if isinstance(insert, ProbeBuffer) else 0
-                                       for insert in inserts)[sel]),
+            self.last_address.eq(Array(getattr(insert, "depth", 1)-1 for insert in inserts)[sel]),
             self.last_byte.eq(Array((len(insert.data)+7)//8-1 for insert in inserts)[sel])
         ]
 

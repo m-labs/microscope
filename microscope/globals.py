@@ -4,6 +4,10 @@ from microscope.inserts import *
 registry = InsertRegistry()
 
 
+def add_probe_async(*args, **kwargs):
+    return ProbeAsync(registry, *args, **kwargs)
+
+
 def add_probe_single(*args, **kwargs):
     return ProbeSingle(registry, *args, **kwargs)
 

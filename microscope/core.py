@@ -236,11 +236,12 @@ class Microscope(Module):
         self.comb += self.cd_microscope.clk.eq(ClockSignal())
 
     def do_finalize(self):
-        inserts = [insert for insert in self.registry.inserts if insert.enabled]
+        inserts = [insert for insert in self.registry.inserts
+                   if self.registry.is_enabled(insert)]
         if not inserts:
             return
         for insert in inserts:
-            insert.finalize()
+            insert.create_insert_logic()
 
         config_rom = ConfigROM(list(get_config_from_inserts(inserts)))
         imux = InsertMux(inserts)

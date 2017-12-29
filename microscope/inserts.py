@@ -10,26 +10,21 @@ class InsertRegistry:
         self.filter = None
         self.inserts = []
 
-    def is_enabled(self, group):
+    def is_enabled(self, insert):
         if self.filter is None:
             return True
         else:
-            return group in self.filter
+            return insert.group in self.filter
 
     def register(self, insert):
         self.inserts.append(insert)
-        return self.is_enabled(insert.group)
 
 
 class Insert(Module):
     def __init__(self, registry, group, name):
         self.group = group
         self.name = name
-        self.enabled = registry.register(self)
-
-    def do_finalize(self):
-        if self.enabled:
-            self.create_insert_logic()
+        registry.register(self)
 
     def create_insert_logic(self):
         raise NotImplementedError

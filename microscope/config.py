@@ -28,4 +28,4 @@ def get_config_from_inserts(inserts):
         "grp": config_groups,
         "ins": config_inserts
     }
-    return msgpack.packb(config)
+    return msgpack.packb(config, use_bin_type=True)

@@ -129,7 +129,5 @@ class ProbeBuffer(Insert):
                 wait_trigger.eq(1)
             )
         ]
-        self.comb += [
-            port.we.eq(running),
-            port.dat_w.eq(self.target)
-        ]
+        self.comb += port.we.eq(running)
+        sync += port.dat_w.eq(self.target)

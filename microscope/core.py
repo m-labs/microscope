@@ -37,18 +37,22 @@ class InsertMux(Module):
         max_depth = max(getattr(insert, "depth", 1) for insert in inserts)
         max_width = max(len(insert.data) for insert in inserts)
 
-        self.sel = Signal(max=len(inserts))
+        if len(inserts) > 1:
+            self.sel = Signal(max=len(inserts))
         self.arm = Signal()
         self.pending = Signal()
         self.address = Signal(max=max_depth)
         self.data = Signal(max_width)
 
-        self.last_address = Signal(max=max(max_depth, 1))
-        self.last_byte = Signal(max=max((max_width+7)//8, 1))
+        self.last_address = Signal(max=max(max_depth, 2))
+        self.last_byte = Signal(max=max((max_width+7)//8, 2))
 
         # # #
 
-        sel = self.sel
+        if len(inserts) > 1:
+            sel = self.sel
+        else:
+            sel = 0
         self.comb += [
             self.pending.eq(Array(getattr(insert, "pending", 0) for insert in inserts)[sel]),
             self.data.eq(Array(insert.data for insert in inserts)[sel])
@@ -128,7 +132,8 @@ class SerialProtocolEngine(Module):
         self.comb += last_byte.eq(current_byte == imux.last_byte)
 
         imux_sel_load = Signal()
-        self.sync += If(imux_sel_load, imux.sel.eq(self.rx_data))
+        if hasattr(imux, "sel"):
+            self.sync += If(imux_sel_load, imux.sel.eq(self.rx_data))
 
         fsm = ResetInserter()(FSM())
         self.submodules += fsm

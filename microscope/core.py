@@ -41,7 +41,7 @@ class InsertMux(Module):
             self.sel = Signal(max=len(inserts))
         self.arm = Signal()
         self.pending = Signal()
-        self.address = Signal(max=max_depth)
+        self.address = Signal(max=max(max_depth, 2))
         self.data = Signal(max_width)
 
         self.last_address = Signal(max=max(max_depth, 2))

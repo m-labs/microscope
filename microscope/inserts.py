@@ -8,10 +8,13 @@ __all__ = ["InsertRegistry", "ProbeAsync", "ProbeSingle", "ProbeBuffer"]
 class InsertRegistry:
     def __init__(self):
         self.filter = None
+        self.enabled = False
         self.inserts = []
 
     def is_enabled(self, insert):
-        if self.filter is None:
+        if not self.enabled:
+            return False
+        elif self.filter is None:
             return True
         else:
             return insert.group in self.filter
@@ -22,9 +25,14 @@ class InsertRegistry:
 
 class Insert(Module):
     def __init__(self, registry, group, name):
+        self.registry = registry
         self.group = group
         self.name = name
         registry.register(self)
+
+    def do_finalize(self):
+        if self.registry.is_enabled(self):
+            self.create_insert_logic()
 
     def create_insert_logic(self):
         raise NotImplementedError

@@ -8,10 +8,13 @@ __all__ = ["InsertRegistry", "ProbeAsync", "ProbeSingle", "ProbeBuffer"]
 class InsertRegistry:
     def __init__(self):
         self.filter = None
+        self.enabled = False
         self.inserts = []
 
     def is_enabled(self, insert):
-        if self.filter is None:
+        if not self.enabled:
+            return False
+        elif self.filter is None:
             return True
         else:
             return insert.group in self.filter
@@ -22,12 +25,10 @@ class InsertRegistry:
 
 class Insert(Module):
     def __init__(self, registry, group, name):
+        self.registry = registry
         self.group = group
         self.name = name
         registry.register(self)
-
-    def create_insert_logic(self):
-        raise NotImplementedError
 
 
 class ProbeAsync(Insert):
@@ -35,7 +36,10 @@ class ProbeAsync(Insert):
         Insert.__init__(self, registry, group, name)
         self.target = target
 
-    def create_insert_logic(self):
+    def do_finalize(self):
+        if not self.registry.is_enabled(self):
+            return
+
         self.data = Signal.like(self.target)
         self.specials += MultiReg(self.target, self.data, "microscope")
 
@@ -46,7 +50,10 @@ class ProbeSingle(Insert):
         self.target = target
         self.clock_domain = clock_domain
 
-    def create_insert_logic(self):
+    def do_finalize(self):
+        if not self.registry.is_enabled(self):
+            return
+
         self.arm = Signal()
         self.pending = Signal()
         self.data = Signal.like(self.target)
@@ -82,7 +89,10 @@ class ProbeBuffer(Insert):
         self.depth = depth
         self.clock_domain = clock_domain
 
-    def create_insert_logic(self):
+    def do_finalize(self):
+        if not self.registry.is_enabled(self):
+            return
+
         self.arm = Signal()
         self.pending = Signal()
         self.address = Signal(max=self.depth)

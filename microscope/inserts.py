@@ -2,7 +2,7 @@ from migen import *
 from migen.genlib.cdc import PulseSynchronizer, MultiReg
 
 
-__all__ = ["InsertRegistry", "ProbeAsync", "ProbeSingle", "ProbeBuffer"]
+__all__ = ["InsertRegistry", "ProbeAsync", "ProbeSingle", "ProbeRecord", "ProbeBuffer"]
 
 
 class InsertRegistry:
@@ -79,6 +79,20 @@ class ProbeSingle(Insert):
                 ps_done.i.eq(1)
             )
         ]
+
+
+class ProbeRecord(Module):
+    def __init__(self, registry, group, name, target, clock_domain="sys"):
+        for f in target.layout:
+            fname, *_ = f
+            if isinstance(f[1], (int, tuple)):
+                self.submodules += ProbeSingle(registry, group, name + "." + fname,
+                                               getattr(target, fname))
+            elif isinstance(f[1], list):
+                self.submodules += ProbeRecord(registry, group, name + "." + fname,
+                                               getattr(target, fname))
+            else:
+                assert False
 
 
 class ProbeBuffer(Insert):

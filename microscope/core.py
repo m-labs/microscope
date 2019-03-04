@@ -94,7 +94,7 @@ class SerialProtocolEngine(Module):
                 )
             )
         ]
-
+        
         next_address = Signal()
         reset_address = Signal()
         last_address = Signal()
@@ -158,7 +158,7 @@ class SerialProtocolEngine(Module):
             )
         )
         fsm.act("MAGIC3",
-            If(self.rx_stb,
+            If(self.rx_stb, 
                 If(self.rx_data == 0x52,
                     NextState("MAGIC4")
                 ).Else(
@@ -235,7 +235,6 @@ class Microscope(Module):
         self.sys_clk_freq = sys_clk_freq
         if registry is None:
             registry = global_registry
-        registry.enabled = True
         self.registry = registry
 
         self.clock_domains.cd_microscope = ClockDomain(reset_less=True)
@@ -246,6 +245,8 @@ class Microscope(Module):
                    if self.registry.is_enabled(insert)]
         if not inserts:
             return
+        for insert in inserts:
+            insert.create_insert_logic()
 
         config_rom = ConfigROM(list(get_config_from_inserts(inserts)))
         imux = InsertMux(inserts)

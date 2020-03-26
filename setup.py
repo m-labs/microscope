@@ -11,7 +11,7 @@ if sys.version_info[:3] < (3, 5):
 
 setup(
     name="microscope",
-    version="1.0",
+    version="1.4",
     description="A simple FPGA logic analyzer for Migen designs",
     author="Sebastien Bourdeauducq",
     author_email="sb@m-labs.hk",

@@ -30,7 +30,7 @@ setup(
         "Programming Language :: Python",
     ],
     packages=find_packages(),
-    install_requires=["migen", "pyserial", "msgpack", "prettytable"],
+    install_requires=["migen", "pyserial", "msgpack>=1.0.0", "prettytable"],
     include_package_data=True,
     entry_points={
         "console_scripts": ["microscope = microscope.microscope:main"],

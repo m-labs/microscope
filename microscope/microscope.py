@@ -20,7 +20,7 @@ class Comm:
 
     def get_config(self):
         self.ser.write(Comm.magic + b"\x00")
-        return next(msgpack.Unpacker(self.ser, read_size=1, encoding="utf-8"))
+        return next(msgpack.Unpacker(self.ser, read_size=1))
 
     def select(self, insert):
         self.ser.write(Comm.magic + b"\x01" + struct.pack("B", insert))
